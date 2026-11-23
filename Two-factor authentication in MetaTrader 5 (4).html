@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet"><title>Two-factor authentication in MetaTrader 5</title>
+<style>
+:root{--wp--preset--color--black:#000000;--wp--preset--color--white:#ffffff;--wp--preset--color--cyan-bluish-gray:#abb8c3;--wp--preset--color--vivid-red:#cf2e2e;--wp--preset--color--vivid-green-cyan:#00d084;--wp--preset--color--vivid-cyan-blue:#0693e3;--wp--preset--font-size--small:13px;--wp--preset--font-size--medium:20px;--wp--preset--shadow--natural:6px 6px 9px rgba(0,0,0,0.2);
+--bg:var(--wp--preset--color--white);--card:#f6f8fa;--tx:var(--wp--preset--color--black);--mut:#5d6b78;--ac:var(--wp--preset--color--vivid-cyan-blue);--ln:color-mix(in srgb,var(--wp--preset--color--cyan-bluish-gray) 50%,transparent);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.w{max-width:720px;margin:0 auto;padding:24px 16px 40px}
+h1{font-size:var(--wp--preset--font-size--medium);font-weight:600;margin:0 0 16px;text-align:center}
+.tabs{display:flex;gap:4px;background:var(--ln);padding:4px;border-radius:12px;max-width:340px;margin:0 auto 16px}
+.tabs button{flex:1;padding:8px;border:0;background:none;color:var(--mut);border-radius:9px;font-size:14px;cursor:pointer}
+.tabs button.on{background:var(--ac);color:#fff}
+.stage{background:var(--card);border:1px solid var(--ln);border-radius:18px;padding:22px 14px;display:flex;justify-content:center;align-items:center;min-height:580px}
+.cap{text-align:center;font-size:17px;margin:18px auto 0;min-height:52px;max-width:520px}
+.pr{height:3px;background:var(--ln);border-radius:2px;margin:10px auto 0;max-width:200px;overflow:hidden}.pr div{height:100%;background:var(--ac);width:0}
+.ctl{display:flex;gap:14px;justify-content:center;align-items:center;margin-top:12px}
+.ctl button{width:34px;height:34px;border:1px solid var(--ln);background:var(--bg);color:var(--tx);border-radius:50%;cursor:pointer;font-size:13px}
+.dots{display:flex;gap:6px}.dots span{width:7px;height:7px;border-radius:50%;background:var(--ln)}.dots span.on{background:var(--ac)}
+/* iPhone */
+.ph{width:258px;height:520px;background:#0b0b0d;border-radius:42px;padding:9px;position:relative;box-shadow:var(--wp--preset--shadow--natural);flex:none}
+.ph:before{content:"";position:absolute;top:16px;left:50%;width:76px;height:20px;margin-left:-38px;background:#0b0b0d;border-radius:12px;z-index:5}
+.sc{background:#f2f2f7;color:#000;border-radius:33px;height:100%;overflow:hidden;position:relative;font:14px/1.3 -apple-system,system-ui,Roboto,sans-serif}
+.sb{display:flex;justify-content:space-between;padding:12px 24px 0;font-size:12px;font-weight:600;height:34px}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:6px 14px 8px;font-size:15px}
+.nav b{font-weight:600}.nav i{font-style:normal;color:var(--ac);position:relative}
+.lst{background:#fff;border-top:1px solid #e3e3e8;border-bottom:1px solid #e3e3e8;margin-top:10px}
+.r{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #ececf0;position:relative;animation:in .4s both}.r:last-child{border:0}
+.r .ic{width:24px;height:24px;border-radius:6px;flex:none}.r .v{margin-left:auto;color:#8a8a8e}.r.c:after{content:"›";margin-left:auto;color:#c4c4c8;font-size:20px;line-height:1}
+.hl{background:color-mix(in srgb,var(--ac) 12%,transparent)}
+.hl:before{content:"";position:absolute;right:26px;top:50%;width:26px;height:26px;margin-top:-13px;border-radius:50%;border:2px solid var(--ac);animation:tap 1.2s infinite;pointer-events:none}
+.nav i.hl{background:none}.nav i.hl:before{right:50%;margin-right:-13px}
+.pin{display:flex;gap:14px;justify-content:center;margin:34px 0 22px}.pin b{width:14px;height:14px;border-radius:50%;border:1.5px solid #3a3a3c}
+.kp{position:absolute;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:8px;background:#d1d3d9}
+.kp span{background:#fff;border-radius:6px;text-align:center;padding:9px 0;font-size:19px;box-shadow:0 1px 0 #8e9096}.kp span.z{background:none;box-shadow:none}
+.tg{width:44px;height:26px;border-radius:13px;background:var(--wp--preset--color--vivid-green-cyan);margin-left:auto;position:relative}.tg:after{content:"";position:absolute;right:2px;top:2px;width:22px;height:22px;border-radius:50%;background:#fff}
+.otp{text-align:center;margin-top:32px}.otp small{color:#8a8a8e;font-size:13px}
+.otp .cd{font:600 38px/1 ui-monospace,Menlo,monospace;letter-spacing:3px;margin:22px 0 18px;animation:in .5s both}
+.ring{width:54px;height:54px;margin:0 auto}.ring circle{fill:none;stroke-width:4}.ring .a{stroke:#e5e5ea}.ring .b{stroke:var(--ac);stroke-dasharray:132;transform:rotate(-90deg);transform-origin:50% 50%;animation:ro 30s linear infinite}
+/* Android */
+.an{width:262px;height:530px;background:#0e0f12;border-radius:30px;padding:8px;position:relative;box-shadow:var(--wp--preset--shadow--natural);flex:none}
+.an:before{content:"";position:absolute;top:17px;left:50%;width:10px;height:10px;margin-left:-5px;background:#000;border-radius:50%;z-index:5}
+.as{background:#fff;color:#202124;border-radius:23px;height:100%;overflow:hidden;position:relative;font:14px/1.3 Roboto,system-ui,sans-serif}
+.asb{display:flex;justify-content:space-between;padding:10px 18px 0;font-size:12px;height:32px}
+.ab{display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 8px 0 16px;font-size:19px;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.ab .a2{display:flex;gap:6px;align-items:center}.ab .bk{margin-left:-6px;margin-right:12px;font-size:22px}
+.ib{position:relative;min-width:34px;height:34px;display:grid;place-items:center;color:var(--ac);font-size:24px;font-weight:300}
+.rg:after{content:"";position:absolute;inset:-3px;border-radius:50%;border:2px solid var(--ac);animation:tap 1.2s infinite}.rg.pl:after{border-radius:18px}
+.ar{display:flex;align-items:center;gap:16px;padding:0 16px;height:54px;position:relative;animation:in .4s both}
+.ar.hl:before{right:20px}.ar small{color:#5f6368;font-size:12px}
+.ai{width:24px;height:24px;border-radius:50%;flex:none}.av{width:40px;height:40px;border-radius:50%;background:var(--ac);color:#fff;display:grid;place-items:center;font-size:18px;flex:none}
+.fld{margin:14px 16px 0;border:1px solid #9aa0a6;border-radius:6px;padding:9px 12px;position:relative;animation:in .4s both}
+.fld small{position:absolute;top:-8px;left:8px;background:#fff;padding:0 4px;color:#5f6368;font-size:11px}
+.sw{display:flex;justify-content:space-between;align-items:center;margin:18px 16px}
+.sw .t2{width:36px;height:20px;border-radius:10px;background:var(--ac);position:relative}.sw .t2:after{content:"";position:absolute;right:-2px;top:-2px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.4);border:1px solid #ddd}
+.ak{position:absolute;bottom:18px;left:0;right:0;display:grid;grid-template-columns:repeat(3,1fr);background:#f1f3f4;padding:6px 0}.ak span{text-align:center;padding:12px 0;font-size:21px}
+.gp{position:absolute;bottom:6px;left:50%;width:90px;height:4px;margin-left:-45px;background:#202124;border-radius:2px}
+/* Desktop */
+.pcw{container-type:inline-size;width:100%;max-width:680px}
+.pc{position:relative;width:100%;aspect-ratio:57/32;font-size:calc(100cqw/57);background:#000;border:1px solid #333;border-radius:.6em;overflow:hidden;line-height:1.3;color:#e6e6e6;font-family:"Segoe UI",system-ui,sans-serif}
+.tt{height:2.2em;background:#1b1b1b;display:flex;justify-content:space-between;align-items:center;padding:0 1em;border-bottom:1px solid #2c2c2c}
+.nv{position:absolute;left:0;top:2.2em;bottom:0;width:40%;background:#1e1e1e;border-right:1px solid #333}
+.nh{height:2em;display:flex;justify-content:space-between;align-items:center;padding:0 .8em;background:#2a2a2a;border-bottom:1px solid #333}
+.nr{height:1.9em;display:flex;align-items:center;gap:.5em;padding:0 .8em}.nr.a{padding-left:2.3em}
+.fd,.us{width:1.1em;height:1.1em;border-radius:.2em;background:#3b9a4a;display:inline-block}.us{background:#e8a33d;border-radius:50%}
+.ch{position:absolute;left:40%;right:0;top:2.2em;bottom:0;background:#0b0b0b}
+.sel{animation:selr .1s 1.4s forwards}
+.cm{position:absolute;left:12em;top:7.8em;width:21em;background:#2b2b2b;border:1px solid #555;padding:.3em 0;box-shadow:.4em .4em 1.2em rgba(0,0,0,.6);opacity:0;animation:fi .25s 1.6s forwards;z-index:3}
+.cm div{height:1.9em;display:flex;justify-content:space-between;align-items:center;padding:0 1em}.cm div span{color:#999}
+.cm hr{border:0;border-top:1px solid #4a4a4a;margin:.35em .2em}
+.cm .en{animation:selm .1s 2.7s forwards}
+.hb2{position:absolute;left:12.2em;top:18.3em;width:20.6em;height:1.9em;border:2px solid var(--wp--preset--color--vivid-red);border-radius:.2em;opacity:0;z-index:4;animation:fi .1s 2.8s forwards,hbp 1.1s 2.8s infinite}
+.cu{position:absolute;width:1.7em;height:1.7em;z-index:5;animation:mv 3.4s ease-in-out forwards;left:40em;top:26em}
+.dm{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+.dl{position:absolute;left:50%;top:50%;width:46%;transform:translate(-50%,-50%);background:#f0f0f0;color:#000;border:1px solid #6d6d6d;box-shadow:0 8px 28px rgba(0,0,0,.5);animation:inx .4s both}
+.dl .tb{background:#fff;padding:.5em .8em;display:flex;justify-content:space-between;border-bottom:1px solid #ddd}
+.dl .bd{padding:1em 1.2em;text-align:center}.dl p{margin:.2em 0 .8em}
+.dl .fl{display:grid;grid-template-columns:auto 1fr;gap:.6em .8em;align-items:center;text-align:left;margin:.6em 0}
+.in{background:#fff;border:1px solid #7a7a7a;padding:.35em .6em;min-height:2em;text-align:left}
+.hl2{border-color:var(--ac)!important;animation:hbq 1.1s infinite}
+.bt{display:flex;gap:.6em;justify-content:flex-end;margin-top:1em}.bt span{border:1px solid #adadad;background:#e1e1e1;padding:.35em 1.3em}.bt span.hl2{border:2px solid var(--ac)}
+.qrb{position:relative;width:11em;height:11em;margin:.4em auto;background:#fff;padding:.5em}.qrb svg{display:block;width:100%;height:100%}
+.qrb:after{content:"";position:absolute;left:.3em;right:.3em;height:.18em;background:var(--ac);box-shadow:0 0 .8em var(--ac);animation:sc 2.2s ease-in-out infinite}
+.ty{display:inline-block;clip-path:inset(0 100% 0 0);animation:tpr 1.2s steps(6) var(--d,.4s) forwards;vertical-align:bottom;letter-spacing:.12em}
+@keyframes sc{0%,100%{top:.5em}50%{top:10.5em}}
+@keyframes ro{to{stroke-dashoffset:132}}@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes inx{from{opacity:0;transform:translate(-50%,-48%)}to{opacity:1;transform:translate(-50%,-50%)}}
+@keyframes tap{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.5);opacity:0}}
+@keyframes hbp{50%{box-shadow:0 0 0 .45em rgba(207,46,46,.3)}}@keyframes hbq{50%{box-shadow:0 0 0 .4em color-mix(in srgb,var(--ac) 30%,transparent)}}
+@keyframes fi{to{opacity:1}}@keyframes selr{to{background:#2d4d78}}@keyframes selm{to{background:var(--ac)}}
+@keyframes mv{0%{left:40em;top:26em}25%,50%{left:13em;top:7em}78%,100%{left:15em;top:18.7em}}
+
+.tp{display:inline-block;clip-path:inset(0 100% 0 0);animation:tpr calc(var(--n)*.07s) steps(var(--n)) var(--d,.3s) forwards;vertical-align:bottom;white-space:nowrap}
+.v .tp{color:#000}
+@keyframes tpr{to{clip-path:inset(0 0 0 0)}}
+.stage>*{animation:sIn .55s cubic-bezier(.2,.8,.2,1) both}.stage>.out{animation:sOut .26s ease-in forwards}
+@keyframes sIn{from{opacity:0;transform:translateX(28px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes sOut{to{opacity:0;transform:translateX(-28px) scale(.97)}}
+.nav i.late:before,.rg.late:after{opacity:0;animation-delay:var(--ld,3.4s)}
+.pin b{animation:pf .15s var(--d) forwards}@keyframes pf{to{background:#202124;border-color:#202124}}
+.kp span.p,.ak span.p{animation:kp .35s var(--d) both}@keyframes kp{50%{background:#b4b8c0;transform:scale(.9)}}
+.dg{display:inline-block;animation:dg .5s cubic-bezier(.2,.9,.3,1.4) calc(var(--i)*.12s) both}
+@keyframes dg{from{opacity:0;transform:translateY(14px) scale(.7)}to{opacity:1;transform:none}}
+.ok{position:absolute;left:50%;top:50%;width:6em;height:6em;margin:-3em 0 0 -3em;border-radius:50%;background:var(--wp--preset--color--vivid-green-cyan);display:grid;place-items:center;opacity:0;z-index:6;animation:okp .6s cubic-bezier(.2,.9,.3,1.4) 4.3s forwards}
+.ok svg{width:3.4em;height:3.4em}
+@keyframes okp{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}
+@keyframes dlo{to{opacity:0;transform:translate(-50%,-50%) scale(.94)}}
+.bt span.bp{animation:hbq 1.1s infinite,bpress .25s 3.6s}@keyframes bpress{50%{transform:scale(.93);background:#cfe7f7}}
+.cu.c2{left:48em;top:30em;animation:mv2 1.6s ease-in-out 1.9s forwards}@keyframes mv2{to{left:var(--tx);top:var(--ty)}}
+.okb{animation:hbr 1.1s 3.4s infinite}@keyframes hbr{0%,100%{border-color:var(--ac)}50%{border-color:var(--ac);box-shadow:0 0 0 .4em color-mix(in srgb,var(--ac) 30%,transparent)}}
+.dm{animation:fi .3s both;opacity:0}
+
+/* white MT5 terminal */
+.pc{background:#fff;color:#000;border:1px solid #c9cdd2;aspect-ratio:57/36;font-family:"Segoe UI",system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.12)}
+.wt{height:1.9em;background:#fff;display:flex;align-items:center;gap:.6em;padding:0 .6em;font-size:.95em;border-bottom:1px solid #e6e6e6;white-space:nowrap;overflow:hidden}
+.lg{width:1.1em;height:1.1em;border-radius:50%;background:#e8a33d;flex:none}.wc{margin-left:auto;color:#444;letter-spacing:.1em;padding-left:1em;background:#fff}
+.mb{height:1.7em;display:flex;gap:1.3em;align-items:center;padding:0 .8em;font-size:.95em}
+.tl{height:2.3em;display:flex;align-items:center;gap:.7em;padding:0 .8em;background:#f7f7f7;border-top:1px solid #eee;border-bottom:1px solid #ddd;overflow:hidden}
+.tl i{width:1.15em;height:1.15em;border-radius:.25em;background:#9aa3ad;flex:none;opacity:.75}.tl i:nth-child(3n){background:#3b9a4a}.tl i:nth-child(4n){background:var(--ac)}
+.sp{flex:1}.tl em{font-style:normal;font-size:.9em;padding:.2em .35em;color:#222;flex:none}.tl em.on{background:#dde3ea;border:1px solid #b6c0cc}
+.lp{position:absolute;left:0;top:5.9em;width:18em;bottom:10em;border-right:1px solid #ccc;background:#fff}
+.ph2{height:1.5em;display:flex;justify-content:space-between;padding:0 .6em;align-items:center;border-bottom:1px solid #ddd;font-size:.9em}
+.nvh{background:#a8c0dc;border-top:1px solid #8aa6c8}
+.mh,.mr{display:grid;grid-template-columns:7em 1fr 1fr;padding:0 .6em;height:1.5em;align-items:center;font-size:.9em;border-bottom:1px solid #eee}
+.mh{color:#444;background:#fafafa}.mr s{display:inline-block;width:.55em;height:.55em;margin-right:.4em}.dn{background:#d33}.up{background:#2a2}.rd{color:#e02}.bl{color:#02e}
+.nr2{height:1.55em;display:flex;align-items:center;gap:.5em;padding:0 .6em;font-size:.95em}.nr2.ac{padding-left:2em;margin:0 .3em}
+.sv{width:1em;height:.8em;background:#3b9a4a;display:inline-block;border-radius:.1em}.us2{width:1em;height:1em;border-radius:50%;background:#f2b705;display:inline-block}
+.cv{position:absolute;left:18em;right:0;top:5.9em;bottom:10em;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font:900 3.2em/1.05 Impact,"Arial Narrow",sans-serif;text-align:center}
+.cv b{font:inherit}
+.tb2{position:absolute;left:0;right:0;bottom:0;height:10em;border-top:1px solid #ccc;background:#fff}
+.th{display:grid;grid-template-columns:repeat(7,1fr);padding:0 .8em;height:1.6em;align-items:center;font-size:.9em;border-bottom:1px solid #ddd}
+.tbal{background:#d9d9d9;padding:.3em .8em;font-size:.9em}
+.sel{animation:selr .1s 1.4s forwards}
+@keyframes selr{to{background:#cfe3f7;box-shadow:inset 0 0 0 1px #6fa3dc}}
+.cm{left:10em;top:16em;width:19em;background:#f2f2f2;color:#000;border:1px solid #a0a0a0;padding:.3em 0;box-shadow:.3em .3em .9em rgba(0,0,0,.3)}
+.cm div{height:1.55em;font-size:.95em}.cm div span{color:#777}.cm hr{border-top:1px solid #d0d0d0;margin:.3em .2em}
+@keyframes selm{to{background:var(--ac);color:#fff}}
+.hb2{left:10.1em;top:24.8em;width:18.8em;height:1.55em}
+@keyframes mv{0%{left:42em;top:32em}25%,50%{left:9em;top:15.2em}78%,100%{left:12em;top:25.2em}}
+.dm{background:rgba(0,0,0,.3)}
+
+/* v2 terminal polish */
+.stage.dsk{min-height:0}
+.wt .tx{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lp,.cv{bottom:9.5em}
+.cv{display:block;padding:0;font:inherit;background-color:#fff;background-image:linear-gradient(#f0f2f4 1px,transparent 1px),linear-gradient(90deg,#f0f2f4 1px,transparent 1px);background-size:4em 4em}
+.cv svg{width:100%;height:100%;display:block}
+.tb2{bottom:1.5em;height:8em}
+.stb{position:absolute;left:0;right:0;bottom:0;height:1.5em;background:#f3f3f3;border-top:1px solid #ddd;display:flex;justify-content:space-between;padding:0 .8em;align-items:center;font-size:.85em;color:#444}
+.tabs2{position:absolute;left:0;right:0;bottom:0;height:1.7em;display:flex;gap:1.1em;padding:0 .8em;align-items:center;font-size:.85em;border-top:1px solid #ddd;background:#fafafa;overflow:hidden;white-space:nowrap}
+.tabs2 span.on{font-weight:600;border-bottom:2px solid var(--ac);padding-bottom:.1em}
+.tbal{display:flex;justify-content:space-between}
+.ar2{font-size:.7em;width:1em;color:#555;font-weight:400;text-align:center}
+.fo{width:1em;height:.8em;background:#e3b341;border-radius:.12em;display:inline-block}
+.nr2.s1{padding-left:1.5em}.nr2.ac{padding-left:2.9em;margin:0 .3em}
+.cm{top:17.55em}.cm div{height:1.5em}
+.hb2{top:26.1em;height:1.5em}
+@keyframes mv{0%{left:36em;top:33em}25%,50%{left:9em;top:16.9em}78%,100%{left:12em;top:26.5em}}
+.dm{background:rgba(15,23,42,.16)}
+.dl{border-radius:.6em;border:1px solid #b9bcc2;overflow:hidden;box-shadow:0 .8em 2.4em rgba(0,0,0,.28)}
+.dl .tb{font-weight:500;padding:.6em .9em}.dl .bd{background:#f3f3f3}
+.in{border-radius:.25em;border-color:#8c8c8c}.bt span{border-radius:.3em}
+@container (max-width:560px){.pc{font-size:calc(100cqw/40);aspect-ratio:40/36}.tl i:nth-child(n+7){display:none}.tl{gap:.5em}.dl{width:82%}}
+
+.lp{overflow:hidden}.cv{bottom:11.2em}
+.nt{position:absolute;left:0;right:0;bottom:0;height:1.6em;display:flex;gap:1.1em;align-items:center;padding:0 .8em;border-top:1px solid #ccc;background:#fafafa;font-size:.85em;color:#666}.nt .on{color:#000;border-bottom:2px solid var(--ac)}
+.ct{position:absolute;left:18em;right:0;bottom:9.5em;height:1.7em;display:flex;align-items:center;border-top:1px solid #ccc;background:#f7f7f7;font-size:.85em;color:#555;white-space:nowrap;overflow:hidden}
+.ct span{padding:.35em 1em;border-right:1px solid #ddd}.ct .on{background:#fff;color:#000;border-bottom:2px solid var(--ac)}
+</style></head><body><div class="w">
+<h1>Two-factor authentication in MetaTrader 5</h1>
+<div class="tabs"><button id="t0" class="on">Android</button><button id="t1">iPhone</button><button id="t2">Desktop</button></div>
+<div class="stage" id="stage"></div>
+<div class="cap" id="cap"></div>
+<div class="pr"><div id="pr"></div></div>
+<div class="ctl"><button id="prev" aria-label="Previous">◀</button><div class="dots" id="dots"></div><button id="next" aria-label="Next">▶</button></div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const keys=[1,2,3,4,5,6,7,8,9,'',0,'⌫'];
+const kk=()=>keys.map(k=>{const p=typeof k==='number'&&k>=1&&k<=4;return `<span class="${k===''?'z ':''}${p?'p':''}"${p?` style="--d:${.6*k}s"`:''}>${k}</span>`}).join('');
+const pinH=s=>`<div class="pin" style="${s||''}">${[0,1,2,3].map(j=>`<b style="--d:${.9+.6*j}s"></b>`).join('')}</div>`;
+const T=(t,d)=>`<span class="tp" style="--n:${t.length};--d:${d}s">${t}</span>`;
+const CODE=`<div class="cd">${'482 913'.split('').map((c,j)=>c==' '?'&nbsp;':`<span class="dg" style="--i:${j}">${c}</span>`).join('')}</div>`;
+/* iPhone */
+const sb=()=>`<div class="sb"><span>9:41</span><span>●●● ▮</span></div>`;
+const ic=c=>`<span class="ic" style="background:${c}"></span>`;
+const R=(l,o={})=>`<div class="r${o.c?' c':''}${o.h?' hl':''}">${o.i?ic(o.i):''}<span>${l}</span>${o.v?`<span class="v">${o.v}</span>`:''}${o.t?'<span class="tg"></span>':''}</div>`;
+const nav=(a,t,b,h)=>`<div class="nav"><i>${a}</i><b>${t}</b><i class="${h?'hl late':''}"${h?' style="--ld:3.5s"':''}>${b}</i></div>`;
+const phone=x=>`<div class="ph"><div class="sc">${sb()}${x}</div></div>`;
+/* Android */
+const shield=`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>`;
+const abar=(t,acts,back)=>`<div class="ab"><span style="display:flex">${back?'<span class="bk">←</span>':''}${t}</span><span class="a2">${acts||''}</span></div>`;
+const AR=(l,o={})=>`<div class="ar${o.h?' hl':''}">${o.i?`<span class="ai" style="background:${o.i}"></span>`:''}<span>${l}</span></div>`;
+const droid=x=>`<div class="an"><div class="as"><div class="asb"><span>9:41</span><span>▾ ▮</span></div>${x}<div class="gp"></div></div></div>`;
+/* Desktop */
+function qr(){let s='',n=25;const f=(r,c)=>{for(const[a,b]of[[3,3],[3,n-4],[n-4,3]])if(Math.abs(r-a)<=3&&Math.abs(c-b)<=3){const d=Math.max(Math.abs(r-a),Math.abs(c-b));return d==3||d<=1}return null};
+for(let r=0;r<n;r++)for(let c=0;c<n;c++){let v=f(r,c);if(v===null)v=((r*31+c*17+r*c*7)%11)<5;if(v)s+=`<rect x="${c}" y="${r}" width="1.02" height="1.02"/>`}
+return`<svg viewBox="0 0 ${n} ${n}" shape-rendering="crispEdges">${s}</svg>`}
+const chart=`<svg viewBox="0 0 230 150" preserveAspectRatio="xMidYMid meet"><g font-family="Impact,Anton,'Arial Narrow',sans-serif" fill="#000" text-anchor="middle"><text x="115" y="68" font-size="33" textLength="176" lengthAdjust="spacingAndGlyphs">XAUUSD.d,M15</text><text x="115" y="108" font-size="33" textLength="212" lengthAdjust="spacingAndGlyphs">Gold vs US Dollar</text></g></svg>`;
+const tree=(sel)=>`<div class="nr2"><b class="ar2">▾</b><u class="fo"></u>Accounts</div><div class="nr2 s1"><b class="ar2">▾</b><u class="sv"></u>MentoMarkets-Server</div><div class="nr2 ac ${sel?'sel':''}"><u class="us2"></u>12345678: Client</div>`+['Subscriptions','Indicators','Expert Advisors','Scripts'].map(x=>`<div class="nr2"><b class="ar2">▸</b><u class="fo"></u>${x}</div>`).join('');
+const base=sel=>`<div class="wt"><i class="lg"></i><span class="tx">12345678 - MentoMarkets-Server - Hedge - Mento Markets Ltd. - [XAUUSD.d,M15]</span><span class="wc">—&nbsp;&nbsp;▢&nbsp;&nbsp;✕</span></div><div class="mb"><span>File</span><span>View</span><span>Insert</span><span>Charts</span><span>Tools</span><span>Window</span><span>Help</span></div><div class="tl">${Array(12).fill('<i></i>').join('')}<b class="sp"></b>${'M1 M5 M15 M30 H1 H4 D1 W1 MN'.split(' ').map(x=>`<em class="${x=='M15'?'on':''}">${x}</em>`).join('')}</div><div class="lp"><div class="ph2"><span>Market Watch: 12:59:01</span><span>✕</span></div><div class="mh"><span>Symbol</span><span>Bid</span><span>Ask</span></div><div class="mr"><span><s class="dn"></s>XAGUSD.p</span><span class="rd">42.637</span><span class="rd">42.673</span></div><div class="mr"><span><s class="up"></s>XAUUSD.p</span><span class="bl">3625.22</span><span class="bl">3625.78</span></div><div class="ph2"><span>Navigator</span><span>✕</span></div>${tree(sel)}<div class="nt"><span class="on">Common</span><span>Favorites</span><span>Chats</span></div></div><div class="cv">${chart}</div><div class="ct"><span class="on">XAUUSD.d,M15</span><span>XAUUSD.x,M1</span><span>XAUUSD.r,M5</span></div><div class="tb2"><div class="th"><span>Symbol</span><span>Ticket</span><span>Time</span><span>Type</span><span>Volume</span><span>Price</span><span>Profit</span></div><div class="tbal"><b>Balance: 1&nbsp;000.00 USD&nbsp; Equity: 1&nbsp;000.00&nbsp; Free Margin: 1&nbsp;000.00</b><b>0.00</b></div><div class="tabs2"><span class="on">Trade</span><span>Exposure</span><span>History</span><span>News</span><span>Mailbox</span><span>Calendar</span><span>Company</span><span>Alerts</span><span>Experts</span><span>Journal</span></div></div><div class="stb"><span>For Help, press F1</span><span>Default</span><span>118.30 ms</span></div>`;
+const pc=x=>`<div class="pcw"><div class="pc">${x}</div></div>`;
+const dlg=(t,b)=>`<div class="dm"></div><div class="dl"><div class="tb"><span>${t}</span><span>✕</span></div><div class="bd">${b}</div></div>`;
+const cursor=`<svg class="cu" viewBox="0 0 24 24"><path d="M3 2l16 9-7 2 4 8-3 1.5-4-8-6 5z" fill="#000" stroke="#fff" stroke-width="1.2"/></svg>`;
+const menu=`<div class="cm"><div>Open an Account<span>Insert</span></div><div>Login to Trade Account<span>Enter</span></div><div>Login to Web Trader</div><div>Login to MQL5.community</div><hr><div>Change Password</div><div class="en">Enable 2FA/TOTP</div><div>Delete<span>Delete</span></div><hr><div>Add to Favorites</div><div>Register as Signal</div><div>Register a Virtual Server</div></div><div class="hb2"></div>`;
+const dlgQR=t=>`<div class="dm"></div><div class="dl"${t?' style="animation:inx .4s both,dlo .4s 4s forwards"':''}><div class="tb"><span>Enable 2FA/TOTP</span><span>✕</span></div><div class="bd"><p>Scan the QR code with your authenticator app</p><div class="qrb">${qr()}</div><div class="fl"><span>One-Time Password</span><div class="in ${t?'hl2':''}">${t?'<span class="ty">482913</span>':''}</div></div><div class="bt"><span class="${t?'hl2 bp':''}">Enable 2FA</span><span>Cancel</span></div></div></div>${t?`<div class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>${cursor.replace('class="cu"','class="cu c2"')}`:''}`;
+const M=[[
+{c:'Open Accounts and tap the OTP icon.',u:()=>droid(abar('Accounts',`<span class="ib">+</span><span class="ib rg">${shield}</span>`)+`<div class="ar" style="height:70px"><span class="av">C</span><span>Client Name<br><small>MentoMarkets-Server · 12345678</small></span></div>`)},
+{c:'Set a four-digit password.',u:()=>droid(abar('OTP','',1)+pinH('margin-top:40px')+`<div class="ak">${kk()}</div>`)},
+{c:'Tap Bind to account.',u:()=>droid(abar('OTP','',1)+AR('Bind to account',{h:1})+AR('Change password')+AR('Synchronize time'))},
+{c:'Enter your server, account number and password, then tap Bind.',ms:6500,u:()=>droid(abar('Bind to account',`<span class="ib rg pl late" style="font-size:13px;font-weight:500;padding:0 10px;--ld:3.6s">BIND</span>`,1)+`<div class="fld"><small>Server</small>${T('MentoMarkets-Server',.4)}</div><div class="fld"><small>Login</small>${T('12345678',1.9)}</div><div class="fld"><small>Password</small>${T('••••••••',2.7)}</div><div class="sw"><span>Bind</span><span class="t2"></span></div>`)},
+{c:'Use the six-digit code when you log in.',u:()=>droid(abar('OTP','',1)+`<div class="otp"><small>One-time password</small>${CODE}<svg class="ring" viewBox="0 0 54 54"><circle class="a" cx="27" cy="27" r="21"/><circle class="b" cx="27" cy="27" r="21"/></svg></div>`)}
+],[
+{c:'Open Settings and tap OTP.',u:()=>phone(nav('','Settings','')+`<div class="lst">${R('Quotes',{i:'#ff9500',c:1})}${R('Chart',{i:'#34c759',c:1})}${R('Trade',{i:'#5856d6',c:1})}${R('Journal',{i:'#8e8e93',c:1})}${R('OTP',{i:'#0693e3',c:1,h:1})}${R('Messages',{i:'#ff3b30',c:1})}${R('About',{i:'#8e8e93',c:1})}</div>`)},
+{c:'Set a four-digit password.',u:()=>phone(nav('','Set password','')+pinH()+`<div class="kp">${kk()}</div>`)},
+{c:'Tap Bind to account.',u:()=>phone(nav('','OTP','')+`<div class="lst">${R('Bind to account',{c:1,h:1})}${R('Change password',{c:1})}${R('Synchronize time',{c:1})}</div>`)},
+{c:'Enter your server, account number and password, then tap Bind.',ms:6500,u:()=>phone(nav('Cancel','Bind to account','Bind',1)+`<div class="lst">${R('Server',{v:T('MentoMarkets-Server',.4)})}${R('Login',{v:T('12345678',1.9)})}${R('Password',{v:T('••••••••',2.7)})}${R('Bind',{t:1})}</div>`)},
+{c:'Use the six-digit code when you log in.',u:()=>phone(nav('','OTP','')+`<div class="otp"><small>One-time password</small>${CODE}<svg class="ring" viewBox="0 0 54 54"><circle class="a" cx="27" cy="27" r="21"/><circle class="b" cx="27" cy="27" r="21"/></svg></div>`)}
+],[
+{c:'Right-click your account in Navigator and select Enable 2FA/TOTP.',ms:6500,u:()=>pc(base(1)+menu+cursor)},
+{c:'Scan the QR code with your authenticator app.',u:()=>pc(base()+dlgQR(0))},
+{c:'Enter the six-digit code and click Enable 2FA.',ms:6800,u:()=>pc(base()+dlgQR(1)),post:()=>{const p=document.querySelector('.pc'),b=p.querySelector('.bt .bp'),c=p.querySelector('.c2');if(!b||!c)return;const q=p.getBoundingClientRect(),r=b.getBoundingClientRect(),e=parseFloat(getComputedStyle(p).fontSize),k=q.width/p.offsetWidth;c.style.setProperty('--tx',((r.left+r.width*.5-q.left)/k/e)+'em');c.style.setProperty('--ty',((r.top+r.height*.4-q.top)/k/e)+'em')}},
+{c:'Enter the code each time you log in.',ms:6000,u:()=>pc(base()+dlg('Login',`<div class="fl"><span>Login</span><div class="in">${T('12345678',.3)}</div><span>Password</span><div class="in">${T('••••••••',1.0)}</div><span>Server</span><div class="in">${T('MentoMarkets-Server',1.7)}</div><span>One-Time Password</span><div class="in hl2"><span class="ty" style="--d:3s">482913</span></div></div><div class="bt"><span class="okb">OK</span><span>Cancel</span></div>`))}
+]];
+let tab=0,i=0,tm,busy=0;
+function show(){const s=M[tab][i],D=s.ms||4500;$('stage').className='stage'+(tab==2?' dsk':'');$('stage').innerHTML=s.u();s.post&&s.post();$('cap').textContent=s.c;
+$('dots').innerHTML=M[tab].map((_,k)=>`<span class="${k==i?'on':''}"></span>`).join('');
+const p=$('pr');p.style.transition='none';p.style.width='0';void p.offsetWidth;p.style.transition=`width ${D}ms linear`;p.style.width='100%';clearTimeout(tm);tm=setTimeout(()=>go(i+1),D);busy=0}
+function go(n){if(busy)return;busy=1;clearTimeout(tm);const L=M[tab].length,ch=$('stage').firstElementChild;if(ch)ch.classList.add('out');setTimeout(()=>{i=(n+L)%L;show()},ch?260:0)}
+$('prev').onclick=()=>go(i-1);$('next').onclick=()=>go(i+1);
+[0,1,2].forEach(n=>$('t'+n).onclick=()=>{tab=n;i=0;busy=0;[0,1,2].forEach(k=>$('t'+k).className=k==n?'on':'');show()});
+show();
+</script></body></html>
